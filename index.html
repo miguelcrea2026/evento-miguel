@@ -113,9 +113,9 @@ background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),line
   <div class="stats">
     <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Confirmados</div></div>
     <div class="stat"><div class="n" id="stPres">0</div><div class="l">Presentes</div></div>
-    <div class="stat lar"><div class="n" id="stGrav">0</div><div class="l">Gravados</div></div>
+    <div class="stat lar" id="statGravCard"><div class="n" id="stGrav">0</div><div class="l">Gravados</div></div>
   </div>
-  <button class="addbtn" onclick="abrirAdd()">➕ Adicionar pessoa que chegou na hora</button>
+  <button id="addBtn" class="addbtn" onclick="abrirAdd()">➕ Adicionar pessoa que chegou na hora</button>
   <div class="busca"><input id="busca" placeholder="🔎 Buscar por nome ou nº do adesivo…" oninput="render(false)"></div>
   <div class="filtros" id="filtros"></div>
   <div class="lista" id="lista"></div>
@@ -161,6 +161,9 @@ async function entrar(){
 function sair(){sessionStorage.removeItem('ev_usr');sessionStorage.removeItem('ev_pw');location.reload();}
 function aplicarRole(){
   const tabs=document.querySelector('.tabs'),rl=document.getElementById('rolelbl'),painel=document.getElementById('painel');
+  const addBtn=document.getElementById('addBtn'),gc=document.getElementById('statGravCard');
+  if(addBtn) addBtn.style.display=(ROLE==='grav')?'none':'block';
+  if(gc) gc.style.display=(ROLE==='cred')?'none':'';
   if(ROLE==='admin'){tabs.style.display='flex';painel.classList.add('tabbed');rl.style.display='none';return;}
   tabs.style.display='none';painel.classList.remove('tabbed');rl.style.display='block';
   if(ROLE==='cred'){modo='cred';document.body.className='modo-cred';rl.innerHTML='Modo <b>CREDENCIAMENTO</b>';}
@@ -192,7 +195,8 @@ function norm(s){return (s||'').toString().toLowerCase().normalize('NFD').replac
 function setModo(m){modo=m;document.body.className=m==='cred'?'modo-cred':'modo-grav';
   document.getElementById('tabGrav').classList.toggle('active',m==='grav');document.getElementById('tabCred').classList.toggle('active',m==='cred');render(false);}
 const FILTROS=[['todos','Todos'],['prof','Profissionais'],['apoio','Apoiadores'],['pres','Presentes'],['grav','Gravados'],['falta','Falta gravar'],['novos','Novos']];
-function renderFiltros(){document.getElementById('filtros').innerHTML=FILTROS.map(f=>`<button class="chip ${filtro===f[0]?'active':''}" onclick="filtro='${f[0]}';render(false)">${f[1]}</button>`).join('');}
+function allowedFiltros(){if(ROLE==='cred')return['todos','prof','apoio','pres','novos'];if(ROLE==='grav')return['todos','pres','grav','falta'];return['todos','prof','apoio','pres','grav','falta','novos'];}
+function renderFiltros(){const al=allowedFiltros();if(al.indexOf(filtro)<0)filtro='todos';document.getElementById('filtros').innerHTML=FILTROS.filter(f=>al.indexOf(f[0])>=0).map(f=>`<button class="chip ${filtro===f[0]?'active':''}" onclick="filtro='${f[0]}';render(false)">${f[1]}</button>`).join('');}
 function passa(p){const e=estado[p.id]||{};if(filtro==='prof')return p.crea;if(filtro==='apoio')return !p.crea;
   if(filtro==='pres')return e.presente;if(filtro==='grav')return e.gravado;if(filtro==='falta')return !e.gravado;if(filtro==='novos')return p._novo;return true;}
 function editingInList(){const a=document.activeElement;return a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')&&a.closest&&a.closest('#lista');}
