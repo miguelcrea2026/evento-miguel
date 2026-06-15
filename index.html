@@ -152,13 +152,13 @@ async function entrar(){
     const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(ENC.iv)},key,b64(ENC.ct));
     PARTICIPANTES=JSON.parse(new TextDecoder().decode(pt));
     ROLE=role;LOGIN=role.toUpperCase();
-    sessionStorage.setItem('ev_usr',u);sessionStorage.setItem('ev_pw',pass);
+    try{var _d=new Date();_d.setHours(24,0,0,0);localStorage.setItem('ev_creds',JSON.stringify({u:u,p:pass,exp:_d.getTime()}));}catch(e){}
     aplicarRole();
     document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';
     initBackend();render(false);
   }catch(e){err.textContent='Senha incorreta.';}
 }
-function sair(){sessionStorage.removeItem('ev_usr');sessionStorage.removeItem('ev_pw');location.reload();}
+function sair(){try{localStorage.removeItem('ev_creds');}catch(e){}sessionStorage.clear();location.reload();}
 function aplicarRole(){
   const tabs=document.querySelector('.tabs'),rl=document.getElementById('rolelbl'),painel=document.getElementById('painel');
   const addBtn=document.getElementById('addBtn'),gc=document.getElementById('statGravCard');
@@ -169,8 +169,9 @@ function aplicarRole(){
   if(ROLE==='cred'){modo='cred';document.body.className='modo-cred';rl.innerHTML='Modo <b>CREDENCIAMENTO</b>';}
   else{modo='grav';document.body.className='modo-grav';rl.innerHTML='Modo <b>GRAVAÇÃO</b>';}
 }
-window.addEventListener('load',()=>{const u=sessionStorage.getItem('ev_usr'),p=sessionStorage.getItem('ev_pw');
-  if(u&&p){document.getElementById('usr').value=u;document.getElementById('pw').value=p;entrar();}else document.getElementById('usr').focus();});
+window.addEventListener('load',()=>{let c=null;try{c=JSON.parse(localStorage.getItem('ev_creds')||'null');}catch(e){}
+  if(c&&c.exp&&Date.now()<c.exp&&c.u&&c.p){document.getElementById('usr').value=c.u;document.getElementById('pw').value=c.p;entrar();}
+  else{try{localStorage.removeItem('ev_creds');}catch(e){}document.getElementById('usr').focus();}});
 
 let modo='grav',filtro='todos',estado={},db=null,useFirebase=false,addTipo=true,pendingRender=false;
 const COL='participantes';
